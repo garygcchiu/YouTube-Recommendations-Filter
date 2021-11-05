@@ -1,0 +1,17 @@
+{
+  "name": "Hide Watched Videos from YT Recommendations",
+  "description": "Hide videos you've already watched from the Recommendations feed",
+  "version": "1.0",
+  "manifest_version": 3,
+  "content_scripts": [
+    {
+      "matches": ["https://*.youtube.com/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "storage"
+  ]
+}
