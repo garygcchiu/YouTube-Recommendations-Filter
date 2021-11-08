@@ -31,10 +31,10 @@ const filterWatchedVideo = (element) => {
     const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
     const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
     if (watchedPercentage > WATCHED_PERCENTAGE_THRESHOLD) {
-        console.log(`Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
+        console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
         videoElement.style.setProperty("display", "none");
     } else {
-        console.log(`NOT removing video ${videoMetadata}: only ${watchedPercentage}% watched, did not exceed ${WATCHED_PERCENTAGE_THRESHOLD}% threshold`);
+        console.log(`[Youtube Recommendations Filter] NOT removing video ${videoMetadata}: only ${watchedPercentage}% watched, did not exceed ${WATCHED_PERCENTAGE_THRESHOLD}% threshold`);
     }
 };
 
@@ -42,15 +42,15 @@ const filterOldVideo = (element) => {
     const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
     const { age, videoMetadata, videoURL } = getVideoInformation(videoElement);
     if (age > VIDEO_AGE_THRESHOLD) {
-        console.log(`Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
+        console.log(`[Youtube Recommendations Filter] Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
         videoElement.style.setProperty("display", "none");
     }
 }
 
 const filterMixPlaylist = (element) => {
     const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
-    const { videoMetadata } = getVideoInformation(videoElement);
-    console.log(`Removing mix playlist ${videoMetadata}`);
+    const { videoMetadata } = getVideoInformation(videoElement, true);
+    console.log(`[Youtube Recommendations Filter] Removing mix playlist ${videoMetadata}`);
     videoElement.style.setProperty("display", "none");
 }
 
@@ -85,10 +85,10 @@ const getVideoAge = (videoElement) => {
     }
 };
 
-const getVideoInformation = (videoElement) => {
+const getVideoInformation = (videoElement, isMix) => {
     return {
         watchedPercentage: getWatchedPercentage(videoElement),
-        videoMetadata: `"${getVideoTitle(videoElement)}" by ${getVideoAuthor(videoElement)}`,
+        videoMetadata: `"${getVideoTitle(videoElement)}"${!isMix ? ` by ${getVideoAuthor(videoElement)}` : "" }`,
         videoURL: getVideoURL(videoElement),
         age: getVideoAge(videoElement),
     }
@@ -103,4 +103,4 @@ const videosGrid = document.querySelector("ytd-rich-grid-renderer > div#contents
 
 // start observing the target node for configured mutations
 observer.observe(videosGrid, { childList: true, subtree: true });
-console.log("Hiding watched & old YouTube videos from Recommended...");
+console.log("[Youtube Recommendations Filter] Hiding watched & old YouTube videos from Recommended...");
