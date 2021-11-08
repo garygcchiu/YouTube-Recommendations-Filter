@@ -1,5 +1,6 @@
-const WATCHED_PERCENTAGE_THRESHOLD = 0;
-const VIDEO_AGE_THRESHOLD = 5;
+let videoWatchedThreshold = 0;
+let videoAgeThreshold = 5;
+let shouldFilterMixPlaylists = true;
 
 const WATCHED_VIDEO_BAR_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-RESUME-PLAYBACK-RENDERER";
 const VIDEO_THUMBNAIL_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-NOW-PLAYING-RENDERER";
@@ -16,13 +17,34 @@ const callback = function(mutationsList) {
                 filterWatchedVideo(mutation.target);
             } else if (isOldVideo(mutation.target)) {
                 filterOldVideo(mutation.target);
-            } else if (isMixPlaylist(mutation.target)) {
+            } else if (isMixPlaylist(mutation.target) && shouldFilterMixPlaylists) {
                 filterMixPlaylist(mutation.target);
             }
         }
     }
 };
 
+// load settings from storage
+chrome.storage.sync.get("watchedThreshold", ({ watchedThreshold }) => {
+    console.log(`[Youtube Recommendations Filter] Loaded video watched threshold = ${watchedThreshold}%`);
+    if (watchedThreshold) {
+        videoWatchedThreshold = watchedThreshold;
+    }
+});
+
+chrome.storage.sync.get("ageThreshold", ({ ageThreshold }) => {
+    console.log(`[Youtube Recommendations Filter] Loaded video age threshold = ${ageThreshold} years old`);
+    if (ageThreshold) {
+        videoAgeThreshold = ageThreshold;
+    }
+});
+
+chrome.storage.sync.get("filterMixPlaylists", ({ filterMixPlaylists }) => {
+    console.log(`[Youtube Recommendations Filter] Loaded filter mix playlists = ${filterMixPlaylists ? "enabled" : "disabled"}`);
+    shouldFilterMixPlaylists = filterMixPlaylists;
+});
+
+// helper functions
 const isWatchedVideo = (target) => (target.nodeName === WATCHED_VIDEO_BAR_NODE_NAME);
 const isOldVideo = (target) => (target.nodeName === VIDEO_ELEMENT_NODE_NAME || target.nodeName === VIDEO_THUMBNAIL_NODE_NAME);
 const isMixPlaylist = (target) => (target.nodeName === YOUTUBE_MIX_PLAYLIST_ELEMENT_NODE_NAME);
@@ -30,18 +52,18 @@ const isMixPlaylist = (target) => (target.nodeName === YOUTUBE_MIX_PLAYLIST_ELEM
 const filterWatchedVideo = (element) => {
     const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
     const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
-    if (watchedPercentage > WATCHED_PERCENTAGE_THRESHOLD) {
+    if (watchedPercentage > videoWatchedThreshold) {
         console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
         videoElement.style.setProperty("display", "none");
     } else {
-        console.log(`[Youtube Recommendations Filter] NOT removing video ${videoMetadata}: only ${watchedPercentage}% watched, did not exceed ${WATCHED_PERCENTAGE_THRESHOLD}% threshold`);
+        console.log(`[Youtube Recommendations Filter] NOT removing video ${videoMetadata}: only ${watchedPercentage}% watched, did not exceed ${videoWatchedThreshold}% threshold`);
     }
 };
 
 const filterOldVideo = (element) => {
     const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
     const { age, videoMetadata, videoURL } = getVideoInformation(videoElement);
-    if (age > VIDEO_AGE_THRESHOLD) {
+    if (age > videoAgeThreshold) {
         console.log(`[Youtube Recommendations Filter] Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
         videoElement.style.setProperty("display", "none");
     }

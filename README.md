@@ -4,8 +4,6 @@ Source code for the Chrome extension: https://chrome.google.com/webstore/detail/
 
 Features
 - Hide watched videos
-- Hide old videos (>5 years old)
-- Hide Mix playlists
-
-TODO:
+- Hide old videos
+- Hide YouTube Mix playlists
 - UI to configure the above watched threshold, age threshold, and toggle filtering mix playlists
