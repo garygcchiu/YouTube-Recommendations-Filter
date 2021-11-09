@@ -2,6 +2,7 @@ let watchedThresholdInput;
 let ageThresholdInput;
 let filterMixPlaylistsInput;
 let settingsForm;
+let settingsSavedMessageDiv;
 
 const DEFAULT_WATCHED_THRESHOLD = 0;
 const DEFAULT_AGE_THRESHOLD = 5;
@@ -12,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     ageThresholdInput = document.getElementById("age-threshold");
     filterMixPlaylistsInput = document.getElementById("filter-mix-playlist");
     settingsForm = document.getElementById("settings");
+    settingsSavedMessageDiv = document.getElementById("settings-saved-message");
+
+    // add event listener to handle saving settings
     settingsForm.addEventListener('submit', onSettingsSave);
 });
 
@@ -56,9 +60,11 @@ function onSettingsSave (e) {
     const newFilterMixPlaylists = filterMixPlaylistsInput.checked;
 
     console.log(`Saving ${newWatchedThreshold} watched threshold, ${newAgeThreshold} age threshold, ${newFilterMixPlaylists} filter mix playlists...`);
-    chrome.storage.sync.set({ watchedThreshold: newWatchedThreshold });
-    chrome.storage.sync.set({ ageThreshold: newAgeThreshold });
-    chrome.storage.sync.set({ filterMixPlaylists: newFilterMixPlaylists });
-    alert("Saved! Please refresh the page to apply the filter.")
+    chrome.storage.sync.set({
+        watchedThreshold: newWatchedThreshold,
+        ageThreshold: newAgeThreshold,
+        filterMixPlaylists: newFilterMixPlaylists
+    });
+    settingsSavedMessageDiv.style.setProperty("display", "block");
 }
 
