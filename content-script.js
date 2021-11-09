@@ -44,7 +44,7 @@ chrome.storage.sync.get("filterMixPlaylists", ({ filterMixPlaylists }) => {
     shouldFilterMixPlaylists = filterMixPlaylists;
 });
 
-// helper functions
+// helper functions (TODO: look into separating into different file, chrome extensions don't play nicely with modules)
 const isWatchedVideo = (target) => (target.nodeName === WATCHED_VIDEO_BAR_NODE_NAME);
 const isOldVideo = (target) => (target.nodeName === VIDEO_ELEMENT_NODE_NAME || target.nodeName === VIDEO_THUMBNAIL_NODE_NAME);
 const isMixPlaylist = (target) => (target.nodeName === YOUTUBE_MIX_PLAYLIST_ELEMENT_NODE_NAME);
@@ -54,7 +54,7 @@ const filterWatchedVideo = (element) => {
     const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
     if (watchedPercentage > videoWatchedThreshold) {
         console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
-        videoElement.style.setProperty("display", "none");
+        videoElement.style.setProperty("display", "none"); // removing from DOM causes a lot of problems when new Recommendations are loaded
     } else {
         console.log(`[Youtube Recommendations Filter] NOT removing video ${videoMetadata}: only ${watchedPercentage}% watched, did not exceed ${videoWatchedThreshold}% threshold`);
     }
