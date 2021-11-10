@@ -1,6 +1,6 @@
-let videoWatchedThreshold = 0;
-let videoAgeThreshold = 5;
-let shouldFilterMixPlaylists = true;
+const DEFAULT_WATCHED_THRESHOLD = 0;
+const DEFAULT_AGE_THRESHOLD = 5;
+const DEFAULT_FILTER_MIX_PLAYLISTS = true;
 
 const WATCHED_VIDEO_BAR_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-RESUME-PLAYBACK-RENDERER";
 const VIDEO_THUMBNAIL_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-NOW-PLAYING-RENDERER";
@@ -8,6 +8,10 @@ const VIDEO_ELEMENT_NODE_NAME = "YTD-RICH-ITEM-RENDERER";
 const YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME = "YTD-RICH-ITEM-RENDERER";
 const YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME = "YTD-COMPACT-VIDEO-RENDERER";
 const YOUTUBE_MIX_PLAYLIST_ELEMENT_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-BOTTOM-PANEL-RENDERER";
+
+let videoWatchedThreshold = DEFAULT_WATCHED_THRESHOLD;
+let videoAgeThreshold = DEFAULT_AGE_THRESHOLD;
+let shouldFilterMixPlaylists = DEFAULT_FILTER_MIX_PLAYLISTS;
 
 // callback function to execute when mutations are observed
 const callback = function(mutationsList) {
@@ -26,6 +30,10 @@ const callback = function(mutationsList) {
 
 // load settings from storage
 chrome.storage.sync.get("watchedThreshold", ({ watchedThreshold }) => {
+    if (watchedThreshold === undefined) {
+        console.log(`[Youtube Recommendations Filter] Using default video watched threshold = ${videoWatchedThreshold}%`);
+        return;
+    }
     console.log(`[Youtube Recommendations Filter] Loaded video watched threshold = ${watchedThreshold}%`);
     if (watchedThreshold) {
         videoWatchedThreshold = watchedThreshold;
@@ -33,6 +41,10 @@ chrome.storage.sync.get("watchedThreshold", ({ watchedThreshold }) => {
 });
 
 chrome.storage.sync.get("ageThreshold", ({ ageThreshold }) => {
+    if (ageThreshold === undefined) {
+        console.log(`[Youtube Recommendations Filter] Using default video age threshold = ${videoAgeThreshold}%`);
+        return;
+    }
     console.log(`[Youtube Recommendations Filter] Loaded video age threshold = ${ageThreshold} years old`);
     if (ageThreshold) {
         videoAgeThreshold = ageThreshold;
@@ -40,8 +52,9 @@ chrome.storage.sync.get("ageThreshold", ({ ageThreshold }) => {
 });
 
 chrome.storage.sync.get("filterMixPlaylists", ({ filterMixPlaylists }) => {
-    console.log(`[Youtube Recommendations Filter] Loaded filter mix playlists = ${filterMixPlaylists ? "enabled" : "disabled"}`);
-    shouldFilterMixPlaylists = filterMixPlaylists;
+    // if undefined, use default value, otherwise use setting from storage
+    shouldFilterMixPlaylists = filterMixPlaylists === undefined ? shouldFilterMixPlaylists : filterMixPlaylists;
+    console.log(`[Youtube Recommendations Filter] Loaded filter mix playlists = ${shouldFilterMixPlaylists ? "enabled" : "disabled"}`);
 });
 
 // helper functions (TODO: look into separating into different file, chrome extensions don't play nicely with modules)
@@ -116,12 +129,15 @@ const getVideoInformation = (videoElement, isMix) => {
     }
 };
 
+const getVideosGridElement = () => {
+    return document.querySelector("ytd-rich-grid-renderer > div#contents") || document.querySelector("div#related div#contents");
+}
+
 // create an observer instance linked to the callback function
 const observer = new MutationObserver(callback);
 
 // get the container for all the recommended videos
-const videosGrid = document.querySelector("ytd-rich-grid-renderer > div#contents") ||
-    document.querySelector("div#related div#contents");
+const videosGrid = getVideosGridElement();
 
 // start observing the target node for configured mutations
 observer.observe(videosGrid, { childList: true, subtree: true });
