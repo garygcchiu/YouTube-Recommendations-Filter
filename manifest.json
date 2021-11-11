@@ -7,7 +7,7 @@
     {
       "matches": ["https://*.youtube.com/*"],
       "js": [
-        "utils.js",
+        "domUtils.js",
         "content-script.js"
       ],
       "run_at": "document_idle"

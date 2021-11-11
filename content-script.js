@@ -10,12 +10,12 @@ let shouldFilterMixPlaylists = DEFAULT_FILTER_MIX_PLAYLISTS;
 const callback = function(mutationsList) {
     for (const mutation of mutationsList) {
         if (mutation.type === 'childList') {
-            if (isWatchedVideo(mutation.target)) {
+            if (isMixPlaylist(mutation.target) && shouldFilterMixPlaylists) {
+                filterMixPlaylist(mutation.target);
+            } else if (isWatchedVideo(mutation.target)) {
                 filterWatchedVideo(mutation.target);
             } else if (isOldVideo(mutation.target)) {
                 filterOldVideo(mutation.target);
-            } else if (isMixPlaylist(mutation.target) && shouldFilterMixPlaylists) {
-                filterMixPlaylist(mutation.target);
             }
         }
     }
@@ -52,19 +52,25 @@ chrome.storage.sync.get("filterMixPlaylists", ({ filterMixPlaylists }) => {
 
 const filterWatchedVideo = (element) => {
     const videoElement = getVideoElement(element);
-    const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
-    if (watchedPercentage > videoWatchedThreshold) {
-        console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
-        videoElement.style.setProperty("display", "none"); // removing from DOM causes a lot of problems when new Recommendations are loaded
+    if (videoElement) {
+        const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
+        if (watchedPercentage > videoWatchedThreshold) {
+            console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
+            videoElement.style.setProperty("display", "none"); // removing from DOM causes a lot of problems when new Recommendations are loaded
+        }
+    } else {
+        console.log("NULL VIDEO ELEMENT FOR ELEMENT ", element);
     }
 };
 
 const filterOldVideo = (element) => {
     const videoElement = getVideoElement(element);
-    const { age, videoMetadata, videoURL } = getVideoInformation(videoElement);
-    if (age > videoAgeThreshold) {
-        console.log(`[Youtube Recommendations Filter] Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
-        videoElement.style.setProperty("display", "none");
+    if (videoElement) {
+        const { age, videoMetadata, videoURL } = getVideoInformation(videoElement);
+        if (age > videoAgeThreshold) {
+            console.log(`[Youtube Recommendations Filter] Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
+            videoElement.style.setProperty("display", "none");
+        }
     }
 }
 
