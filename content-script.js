@@ -58,8 +58,6 @@ const filterWatchedVideo = (element) => {
             console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
             videoElement.style.setProperty("display", "none"); // removing from DOM causes a lot of problems when new Recommendations are loaded
         }
-    } else {
-        console.log("NULL VIDEO ELEMENT FOR ELEMENT ", element);
     }
 };
 
