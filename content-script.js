@@ -7,6 +7,7 @@ const VIDEO_THUMBNAIL_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-NOW-PLAYING-RENDERER";
 const VIDEO_ELEMENT_NODE_NAME = "YTD-RICH-ITEM-RENDERER";
 const YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME = "YTD-RICH-ITEM-RENDERER";
 const YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME = "YTD-COMPACT-VIDEO-RENDERER";
+const YOUTUBE_RELATED_VIDEO_MED_ELEMENT_NODE_NAME = "YTD-COMPACT-RADIO-RENDERER";
 const YOUTUBE_MIX_PLAYLIST_ELEMENT_NODE_NAME = "YTD-THUMBNAIL-OVERLAY-BOTTOM-PANEL-RENDERER";
 
 let videoWatchedThreshold = DEFAULT_WATCHED_THRESHOLD;
@@ -57,13 +58,13 @@ chrome.storage.sync.get("filterMixPlaylists", ({ filterMixPlaylists }) => {
     console.log(`[Youtube Recommendations Filter] Loaded filter mix playlists = ${shouldFilterMixPlaylists ? "enabled" : "disabled"}`);
 });
 
-// helper functions (TODO: look into separating into different file, chrome extensions don't play nicely with modules)
+// helper functions (TODO: look into separating into different file, chrome extensions don't play nicely with modules tho)
 const isWatchedVideo = (target) => (target.nodeName === WATCHED_VIDEO_BAR_NODE_NAME);
 const isOldVideo = (target) => (target.nodeName === VIDEO_ELEMENT_NODE_NAME || target.nodeName === VIDEO_THUMBNAIL_NODE_NAME);
 const isMixPlaylist = (target) => (target.nodeName === YOUTUBE_MIX_PLAYLIST_ELEMENT_NODE_NAME);
 
 const filterWatchedVideo = (element) => {
-    const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
+    const videoElement = getVideoElement(element);
     const { watchedPercentage, videoMetadata, videoURL } = getVideoInformation(videoElement);
     if (watchedPercentage > videoWatchedThreshold) {
         console.log(`[Youtube Recommendations Filter] Removing watched video ${videoMetadata} from Recommendations (watched ${watchedPercentage}%). URL: ${videoURL}`);
@@ -74,7 +75,7 @@ const filterWatchedVideo = (element) => {
 };
 
 const filterOldVideo = (element) => {
-    const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
+    const videoElement = getVideoElement(element);
     const { age, videoMetadata, videoURL } = getVideoInformation(videoElement);
     if (age > videoAgeThreshold) {
         console.log(`[Youtube Recommendations Filter] Removing old video ${videoMetadata} from Recommendations (age ${age} years old). URL: ${videoURL}`);
@@ -83,11 +84,15 @@ const filterOldVideo = (element) => {
 }
 
 const filterMixPlaylist = (element) => {
-    const videoElement = element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) || element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME);
+    const videoElement = getVideoElement(element);
     const { videoMetadata } = getVideoInformation(videoElement, true);
     console.log(`[Youtube Recommendations Filter] Removing mix playlist ${videoMetadata}`);
     videoElement.style.setProperty("display", "none");
 }
+
+const getVideoElement = (element) => (element.closest(YOUTUBE_HOME_VIDEO_ELEMENT_NODE_NAME) ||
+    element.closest(YOUTUBE_RELATED_VIDEO_ELEMENT_NODE_NAME) ||
+    element.closest(YOUTUBE_RELATED_VIDEO_MED_ELEMENT_NODE_NAME));
 
 const getWatchedPercentage = (videoElement) => {
     const progressBar = videoElement.querySelector("div#progress");
@@ -101,7 +106,8 @@ const getVideoTitle = (videoElement) => {
 };
 
 const getVideoAuthor = (videoElement) => {
-    return (videoElement.querySelector("a.yt-formatted-string") || videoElement.querySelector("yt-formatted-string")).innerHTML;
+    return (videoElement.querySelector("a.yt-formatted-string") ||
+        videoElement.querySelector("yt-formatted-string")).innerHTML;
 };
 
 const getVideoURL = (videoElement) => {
@@ -122,23 +128,37 @@ const getVideoAge = (videoElement) => {
 
 const getVideoInformation = (videoElement, isMix) => {
     return {
-        watchedPercentage: getWatchedPercentage(videoElement),
+        watchedPercentage: !isMix ? getWatchedPercentage(videoElement) : undefined,
         videoMetadata: `"${getVideoTitle(videoElement)}"${!isMix ? ` by ${getVideoAuthor(videoElement)}` : "" }`,
         videoURL: getVideoURL(videoElement),
         age: getVideoAge(videoElement),
     }
 };
 
-const getVideosGridElement = () => {
-    return document.querySelector("ytd-rich-grid-renderer > div#contents") || document.querySelector("div#related div#contents");
+const getVideosGrid = () => document.querySelector("ytd-rich-grid-renderer > div#contents") ||
+    document.querySelector("div#secondary div#related div#contents");
+
+const initObserver = () => {
+    // get the container for all the recommended videos
+    const videosGrid = getVideosGrid();
+    console.log("videosGrid = ", videosGrid);
+
+    // start observing the target node for configured mutations
+    observer.observe(videosGrid, { childList: true, subtree: true });
+    console.log("[Youtube Recommendations Filter] Hiding watched & old YouTube videos from Recommended...");
 }
 
 // create an observer instance linked to the callback function
 const observer = new MutationObserver(callback);
 
-// get the container for all the recommended videos
-const videosGrid = getVideosGridElement();
+// start observer
+initObserver();
 
-// start observing the target node for configured mutations
-observer.observe(videosGrid, { childList: true, subtree: true });
-console.log("[Youtube Recommendations Filter] Hiding watched & old YouTube videos from Recommended...");
+// add a listener to receive messages from service_worker.js: refreshes mutation observer when user navigates to video/back
+chrome.runtime.onMessage.addListener((request) => {
+    if (request.message === 'New YouTube Navigation') {
+        console.log("Page change detected...");
+        // initialize a new mutation observer: if node already has the same observer, all existing observers are removed
+        initObserver();
+    }
+});

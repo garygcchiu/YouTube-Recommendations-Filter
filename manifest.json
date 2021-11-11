@@ -7,11 +7,15 @@
     {
       "matches": ["https://*.youtube.com/*"],
       "js": ["content-script.js"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ],
+  "background": {
+    "service_worker": "service_worker.js"
+  },
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
   "action": {
     "default_popup": "interface.html"
