@@ -1,13 +1,16 @@
 {
   "name": "YouTube Recommendations Filter",
   "description": "Hide videos you've already watched, old videos, and mix playlists from the Recommendations feed",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "manifest_version": 3,
   "content_scripts": [
     {
       "matches": ["https://*.youtube.com/*"],
-      "js": ["content-script.js"],
-      "run_at": "document_end"
+      "js": [
+        "utils.js",
+        "content-script.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "permissions": [
