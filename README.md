@@ -2,7 +2,7 @@
 
 Source code for the Chrome extension: https://chrome.google.com/webstore/detail/hide-watched-videos-from/pefndkngkakmmfnadcmnfnhemieaapbb?hl=en&authuser=0
 
-This extension is depreciated, and the same functionality can be achieved by adding the following filters to uBlock Origin:
+**This extension is depreciated, and the same functionality can be achieved by adding the following filters to uBlock Origin:**
 
 ```
 www.youtube.com##ytd-rich-item-renderer:has(yt-formatted-string:has-text(/^Mix - /))
