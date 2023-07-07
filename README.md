@@ -12,6 +12,11 @@ www.youtube.com##ytd-rich-item-renderer:has(yt-formatted-string:has-text(/^My Mi
 www.youtube.com##ytd-thumbnail-overlay-resume-playback-renderer:upward(ytd-rich-item-renderer)
 ```
 
+If you want to not exclude watched videos from a channel's page, use this rule instead of the ^ last rule (may not work on all AdBlock engines. Works on uBlock Origin though):
+```
+www.youtube.com##ytd-thumbnail-overlay-resume-playback-renderer:upward(ytd-rich-item-renderer:not([is-slim-grid=""]))
+```
+
 
 Features
 - Hide watched videos
