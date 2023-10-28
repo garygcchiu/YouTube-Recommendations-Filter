@@ -12,10 +12,16 @@ www.youtube.com##ytd-rich-item-renderer:has(yt-formatted-string:has-text(/^My Mi
 www.youtube.com##ytd-thumbnail-overlay-resume-playback-renderer:upward(ytd-rich-item-renderer)
 ```
 
+Add this to filter out videos with <1000 views:
+```
+www.youtube.com##ytd-rich-item-renderer span.ytd-video-meta-block:has-text(/\d{1,3} views/):upward(ytd-rich-item-renderer)
+```
+
 If you want to not exclude watched videos from a channel's page, use this rule instead of the ^ last rule (may not work on all AdBlock engines. Works on uBlock Origin though):
 ```
 www.youtube.com##ytd-thumbnail-overlay-resume-playback-renderer:upward(ytd-rich-item-renderer:not([is-slim-grid=""]))
 ```
+
 
 
 Features
